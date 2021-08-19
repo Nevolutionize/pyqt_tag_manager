@@ -3,6 +3,7 @@ from Qt import QtGui
 
 
 def only_numbers(limit=None):
+    """Returns a validator that only allows numerical characters."""
     regex = '[0-9]'
 
     l_regex = '+' if limit is None else '{{0,{len}}}'.format(len=limit)
@@ -12,6 +13,7 @@ def only_numbers(limit=None):
 
 
 def only_letters(limit=None):
+    """Returns a validator that only allows alphabetical characters."""
     regex = '[a-zA-Z]'
 
     l_regex = '+' if limit is None else '{{0,{len}}}'.format(len=limit)
@@ -21,6 +23,7 @@ def only_letters(limit=None):
 
 
 def no_special_characters(limit=None, allow_chars=None):
+    """Returns a validator that only allows alphanumeric characters."""
     if allow_chars is None:
         allow_chars = []
 

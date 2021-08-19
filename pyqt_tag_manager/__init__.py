@@ -9,9 +9,6 @@ def _init_logger():
     _logger.propagate = False
     _logger.setLevel(logging.INFO)
 
-    # formatter = logging.Formatter(
-    #     '%(levelname)-8s [%(name)s.%(filename)s]:    %(message)s')
-    #
     formatter = logging.Formatter(
         '{lvl} [{name}] [{file}:{line}] - {msg}'.format(
             lvl='%(levelname)-8s',

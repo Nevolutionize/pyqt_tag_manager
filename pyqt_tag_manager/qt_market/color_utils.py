@@ -5,7 +5,10 @@ import enum
 from Qt import QtGui
 
 
+# TODO: The TagManager should allow configurable color maps so users can
+#  customize the color palette for their own needs and interfaces.
 class __ColorPaletteMap(enum.Enum):
+    """Default color map used to determine the color palette for the tags. """
     A = (200, 0, 0)
     B = (150, 0, 0)
     C = (200, 0, 100)
@@ -37,6 +40,15 @@ class __ColorPaletteMap(enum.Enum):
 
 
 def get_mapped_color(text):
+    """Using the first character of the provided text, get a QColor object
+    representing the corresponding color from the color map.
+
+    Args:
+        text (str): The text used to query the color values.
+
+    Returns:
+        QtCore.QColor: The mapped color value of the corresponding text.
+    """
     text = text.capitalize()[0]
 
     if hasattr(__ColorPaletteMap, text):
@@ -47,33 +59,16 @@ def get_mapped_color(text):
         return QtGui.QColor(*getattr(__ColorPaletteMap, 'OTHER').value)
 
 
-def tint_icon_color(icon, size, color):
-    """Tint the icon using the provided color.
-
-    Tint opacity determined by the alpha channel.
+def pastelize_color(color):
+    """Pastelize the provided color by reducing the lightness value.
 
     Args:
-        icon (QIcon): Icon to tint with the provided color.
-        size (int): The icon resolution, in pixels.
-        color (tuple): RGBA color values.
+        color (Union[list, tuple, QtCore.QColor]): Color to modify.
+            Supports RGB/RGBA values as list/tuples or QColor object.
 
     Returns:
-        Tinted QIcon object.
+        QColor: Pastelized color object.
     """
-    color = QtGui.QColor(*color)
-    pixmap = icon.pixmap(size, size)
-
-    painter = QtGui.QPainter(pixmap)
-    painter.setCompositionMode(painter.CompositionMode_SourceAtop)
-    painter.fillRect(pixmap.rect(), color)
-    painter.end()
-
-    icon.addPixmap(pixmap)
-
-    return icon
-
-
-def pastelize_color(color):
     if isinstance(color, QtGui.QColor):
         color = [color.red(), color.green(), color.blue(), color.alpha()]
 
@@ -89,6 +84,17 @@ def pastelize_color(color):
 
 
 def desaturate(color, percent):
+    """Desaturate the provided color by reducing the saturation with the
+    provided percentage value.
+
+    Args:
+        color (Union[list, tuple, QtCore.QColor]): Color to modify.
+            Supports RGB/RGBA values as list/tuples or QColor object.
+        percent (float): Percentage to reduce the saturation value by.
+
+    Returns:
+        QtCore.QColor: Desaturated color object.
+    """
     if isinstance(color, QtGui.QColor):
         color = [color.red(), color.green(), color.blue(), color.alpha()]
 
