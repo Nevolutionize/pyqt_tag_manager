@@ -4,7 +4,6 @@ from Qt import QtGui
 from Qt import QtWidgets
 from pyqt_tag_manager.qt_market import widget_vendor
 from pyqt_tag_manager.qt_market import color_utils
-from pyqt_tag_manager.qt_market import validators
 from pyqt_tag_manager.qt_market import animations
 
 
@@ -14,6 +13,7 @@ SORTING_MATCH_ROLE = QtCore.Qt.UserRole + 1  # Tag is prioritized when sorting.
 
 
 class TagManager(QtWidgets.QWidget):
+    """Tag management interface used for editing and displaying tags."""
     # Signals.
     mode_changed = QtCore.Signal(str)
     tag_is_valid = QtCore.Signal(str)
@@ -32,6 +32,7 @@ class TagManager(QtWidgets.QWidget):
 
     # Private.
     def __build_ui(self):
+        """Build the base UI."""
         main_layout = widget_vendor.get_vbox_layout(self, no_margins=True)
         self.setLayout(main_layout)
 
@@ -51,6 +52,11 @@ class TagManager(QtWidgets.QWidget):
         self.tag_is_invalid.connect(self._on_tag_is_invalid)
 
     def __register_tag(self, tag_name):
+        """Register the tag so that it's available in the underlying model.
+
+        Args:
+            tag_name (str): Name of the tag to register.
+        """
         # Prevent duplication: Add tag only if it doesn't exist.
         if not self.has_tag(tag_name):
             self.tag_viewer.add_tags([tag_name])
@@ -77,15 +83,20 @@ class TagManager(QtWidgets.QWidget):
             return False
 
     def add_tags(self, tags):
+        """Add a list of tags to the viewer.
+
+        Args:
+            tags (list): List of tags toa dd.
+        """
         for tag in tags:
             self.add_tag(tag)
-        # self.tag_viewer.add_tags(tags)
 
     def clear_tags(self):
+        """Clear all existing tags from the viewer's model."""
         self.tag_viewer.clear_tags()
 
     def has_tag(self, tag_name):
-        """Check if a tag already exists in the viewer.
+        """Check if a tag already exists in the viewer's model.
 
         Args:
             tag_name (str): Name of the tag to search for.
@@ -99,21 +110,40 @@ class TagManager(QtWidgets.QWidget):
         """Return all of the registered tags.
 
         Returns:
-
+            list: List of all registered tags.
         """
         return self.tag_viewer.get_tags()
 
     def enable_tag_management(self, enabled):
+        """Allows editing functionality for tags within the manager.
+
+        Args:
+            enabled (bool): Determines if tags can be edited.
+        """
         mode = self.EDIT_MODE if enabled else self.VIEWER_MODE
         self.mode_changed.emit(mode)
+
+    def enable_tag_editor_mode(self):
+        """Enables editing functionality for tags. """
+        self.enable_tag_management(True)
+
+    def enable_tag_preview_mode(self):
+        """Disables editing functionality for tags (read-only). """
+        self.enable_tag_management(False)
 
     # Slots.
     @QtCore.Slot()
     def _on_editor_text_changed(self, text):
+        """Triggered when the tag input editor text is changed.
+
+        Args:
+            text (str): The current text input value.
+        """
         self.tag_viewer.sort_tags_by_search_criteria(text=text)
 
     @QtCore.Slot()
     def _on_return_pressed(self):
+        """Triggered when the tag input editor is returned. """
         tag_name = self.tag_editor.text()
 
         if tag_name and not self.has_tag(tag_name):
@@ -123,23 +153,27 @@ class TagManager(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def _on_mode_changed(self, mode):
+        """Triggered when the editing functionality of the manager changes. """
         enabled = True if mode == self.EDIT_MODE else False
         self.tag_manager.enable_editing(enabled)
 
     @QtCore.Slot()
     def _on_tag_is_valid(self, tag_name):
+        """Triggered when the tag input editor value is valid. """
         self.add_tag(tag_name)
         self.tag_editor.clear()
         self.tag_viewer.scroll_to_last_added_item()
 
     @QtCore.Slot()
     def _on_tag_is_invalid(self, tag_name):
+        """Triggered when the tag input editor value is invalid. """
         anm = animations.FailColorAnimation(parent=self.tag_editor)
         anm.play()
 
 
-# Protected: Not intended for use outside this module.
+# Protected: Not intended for use outside this module!
 class _TaggingWidget(QtWidgets.QFrame):
+    """Base widget containing the tag editor and viewer."""
     def __init__(self, parent=None):
         super(_TaggingWidget, self).__init__(parent)
         self.setFrameShape(self.StyledPanel)
@@ -150,6 +184,7 @@ class _TaggingWidget(QtWidgets.QFrame):
 
     # Public.
     def _build_ui(self):
+        """Build the base UI."""
         main_layout = widget_vendor.get_vbox_layout(self, no_margins=True)
         main_layout.setSpacing(0)
         self.setLayout(main_layout)
@@ -173,9 +208,13 @@ class _TaggingWidget(QtWidgets.QFrame):
         main_layout.addWidget(self.tag_viewer)
 
     def get_editor(self):
+        """Returns the input editor widget that allows user to
+        add/filter/sort tags."""
         return self.tag_editor.get_editor()
 
     def get_viewer(self):
+        """Returns the viewer widget that allows user to see all available
+        tags. """
         return self.tag_viewer
 
     def enable_editing(self, enabled):
@@ -188,6 +227,7 @@ class _TaggingWidget(QtWidgets.QFrame):
 
 
 class _InputEditor(QtWidgets.QWidget):
+    """Base widget used for editing the tag input value. """
     def __init__(self, parent=None):
         super(_InputEditor, self).__init__(parent)
         self._valid_characters = [' ', '_', '.']
@@ -195,6 +235,7 @@ class _InputEditor(QtWidgets.QWidget):
         self._build_ui()
 
     def _build_ui(self):
+        """Build the base UI."""
         # Add layouts.
         main_layout = widget_vendor.get_hbox_layout(self, no_margins=True)
         self.setLayout(main_layout)
@@ -206,10 +247,11 @@ class _InputEditor(QtWidgets.QWidget):
         self.add_tag_edit.setClearButtonEnabled(True)
         self.add_tag_edit.setFrame(False)
 
-        validator = validators.no_special_characters(
-            allow_chars=self._valid_characters,
-            limit=50
-        )
+        # TODO: Why am I enforcing this? Validator needs to be configurable.
+        # validator = validators.no_special_characters(
+        #     allow_chars=self._valid_characters,
+        #     limit=50
+        # )
         # self.add_tag_edit.setValidator(validator)
 
         valid_chrs = 'a-Z, 0-9, "{c}"'.format(
@@ -229,10 +271,12 @@ class _InputEditor(QtWidgets.QWidget):
         main_layout.addWidget(self.add_tag_edit)
 
     def get_editor(self):
+        """Returns the line edit widget that accepts the input. """
         return self.add_tag_edit
 
 
 class _TagListViewer(QtWidgets.QListView):
+    """Base list viewport widget used to display all available tags. """
     def __init__(self, parent=None):
         super(_TagListViewer, self).__init__(parent)
         self.__tag_management_enabled = False
@@ -259,6 +303,7 @@ class _TagListViewer(QtWidgets.QListView):
 
     # Private.
     def __setup_model(self):
+        """Setup for the model(s) used by the viewer. """
         self._model = QtGui.QStandardItemModel(self)
 
         self._proxy_model = _TagListProxyModel(self)
@@ -266,6 +311,11 @@ class _TagListViewer(QtWidgets.QListView):
         self.setModel(self._proxy_model)
 
     def scroll_to_last_added_item(self):
+        """Scrolls viewer to the last tag (item) that was added to the model.
+
+        Since model sorting is handled by the QSortFilterProxyModel, it will
+        scroll to the positional index of the proxy model.
+        """
         if self.__last_item_added:
             index = self.__last_item_added.index()
 
@@ -276,10 +326,20 @@ class _TagListViewer(QtWidgets.QListView):
 
     # Public.
     def find_tag(self, tag_name):
+        """Checks if a tag exists in the model.
+
+        Returns:
+            bool: True if tag name exists, otherwise False.
+        """
         match = self._model.findItems(tag_name, QtCore.Qt.MatchExactly, 0)
         return True if match else False
 
     def add_tag(self, tag_name):
+        """Add a tag to the model.
+
+        Args:
+            tag_name (str): The name of the tag to add.
+        """
         item = QtGui.QStandardItem()
         item.setData(tag_name, DISPLAY_ROLE)
         item.setData(False, SORTING_MATCH_ROLE)
@@ -290,16 +350,17 @@ class _TagListViewer(QtWidgets.QListView):
         self.__last_item_added = item
 
     def add_tags(self, tags):
-        """
+        """Add a list of tags to the model.
 
-        Sorting after every item has a significant affect on performance
-        when adding tags from a large list of tags.
+        Note:
+            Sorting after every item has a significant affect on performance
+            when adding tags from a large list of tags.
+
+            This is specially true when the proxy model sorting is triggered.
+            Therefore, we'll only sort once all the tags are added.
 
         Args:
-            tags:
-
-        Returns:
-
+            tags (list): List of tags to add to the model.
         """
         for tag in tags:
             self.add_tag(tag)
@@ -307,15 +368,22 @@ class _TagListViewer(QtWidgets.QListView):
         self.sort()
 
     def clear_tags(self):
+        """Clear the model of all tags/items."""
         self._model.clear()
 
     def delete_tag(self, tag_name):
+        """Delete a specific tag from the model, by name.
+
+        Args:
+            tag_name (str): The name of the tag to delete.
+        """
         match = self._model.findItems(tag_name, QtCore.Qt.MatchExactly, 0)
 
         for item in match:
             self._model.removeRow(item.row())
 
     def get_tags(self):
+        """Returns a list of all available tags in the model."""
         tag_list = []
         for row in range(self._model.rowCount()):
             index = self._model.index(row, 0)
@@ -328,32 +396,50 @@ class _TagListViewer(QtWidgets.QListView):
         """Sort the proxy model based on the pre-defined sort criteria.
         Warning: This can be a time-intensive operation when lots of tags
         exist (> 200). Use sparingly and only when needed.
-
-        Args:
-            force (bool): In certain circumstances (as in cases where only
-            1 item exists in model) QSortFilterProxyModel won't trigger
-            lessThan. Forcing it will run the regex sorting logic instead.
         """
         self._proxy_model.sort(0)
 
     def sort_tags_by_search_criteria(self, text):
+        """Sorts the tags by the provided text.
+
+        Args:
+            text (str): Text pattern to sort tags by.
+        """
         self.scrollToTop()
         self._proxy_model.sort_by_match(text)
 
     def enable_tag_management(self, enabled):
+        """Allows editing functionality for tags within the manager.
+
+        Args:
+            enabled (bool): Determines if tags can be edited.
+        """
         self.__tag_management_enabled = enabled
 
     def is_tag_management_enabled(self):
+        """Checks if the tag editing mode is enabled or disabled.
+
+        Returns:
+            bool: True if editing mode is enabled, False if preview mode is
+              enabled.
+        """
         return self.__tag_management_enabled
 
     def enable_dark_mode(self, enabled):
+        """Enables dark mode styling of the tag delegates.
+
+        Args:
+            enabled (bool): Enables dark mode styling.
+        """
         self.__dark_mode_enabled = enabled
 
     def is_dark_mode_enabled(self):
+        """Checks if dark mode is enabled. """
         return self.__dark_mode_enabled
 
 
 class _TagDelegate(QtWidgets.QStyledItemDelegate):
+    """Custom delegate representation of the tag/item in the viewer. """
     def __init__(self, parent=None):
         super(_TagDelegate, self).__init__(parent)
         self.__is_hovering_delete_btn = False
@@ -397,10 +483,24 @@ class _TagDelegate(QtWidgets.QStyledItemDelegate):
         self._label_font.setWeight(self._label_font.Black)
         self._label_font.setKerning(False)
 
-    def __is_cursor_in_delete_button_rect(self, rect, pos):
-        return self.__delete_button_rect(rect).contains(pos)
+    # TODO: Deprecate? Now that editorEvent is informing the paint method when
+    #  the cursor is hovering over the delete button, is this still needed?
+    # def __is_cursor_in_delete_button_rect(self, rect, pos):
+    #     """Checks if the cursor is within the bounds of the "Delete Tag"
+    #     button of the delegate.
+    #
+    #     Args:
+    #         rect(QtCore.QRect):
+    #     """
+    #     return self.__delete_button_rect(rect).contains(pos)
 
     def __delete_button_rect(self, rect):
+        """Returns a custom adjusted rect for the "delete" button of the
+        delegate.
+
+        Args:
+            rect (QtCore.QRect):
+        """
         padding = 4  # Applies padding to offset the button from the sides.
         return rect.adjusted(
             rect.width() - self._delete_btn_size.width() - padding,  # Right.
@@ -419,6 +519,10 @@ class _TagDelegate(QtWidgets.QStyledItemDelegate):
 
     # Inherited.
     def paint(self, painter, option, index):
+        """Override the inherited paint method.
+
+        Custom paint implementation is used here to draw and style the item.
+        """
         tag_name = index.data(DISPLAY_ROLE)
         base_color = color_utils.get_mapped_color(text=tag_name)
 
@@ -549,6 +653,11 @@ class _TagDelegate(QtWidgets.QStyledItemDelegate):
                                                      index)
 
     def sizeHint(self, option, index):
+        """Override the inherited sizeHint method.
+
+        Custom logic re-calculates the correct size of the delegate so that
+        items don't get overlapped in the viewport.
+        """
         rect = QtGui.QFontMetricsF(self._label_font).boundingRect(
             option.rect,
             QtCore.Qt.TextSingleLine,
@@ -573,13 +682,47 @@ class _TagDelegate(QtWidgets.QStyledItemDelegate):
 
     # Public.
     def is_tag_management_enabled(self):
+        """Checks if tag editing functionality is enabled on the parent
+        viewer.
+
+        The "Delete Tag" button will only be drawn if editing is enabled.
+        """
         return self.parent().is_tag_management_enabled()
 
     def is_dark_mode_enabled(self):
+        """Checks if dark mode is enabled on the parent viewer.
+
+        The delegate paint styling is adjusted accordingly, to make it easy
+        on the eyes.
+        """
         return self.parent().is_dark_mode_enabled()
 
 
 class _TagListProxyModel(QtCore.QSortFilterProxyModel):
+    """Custom model for sorting and filtering.
+
+    Our ideal sorting mechanism is expected to...
+        A) Always prioritize items matching the search pattern.
+        B) Followed by the non-matching items.
+        C) Both must always be sorted in ascending order.
+
+        Additionally, non-matching items will be semi-transparent to provide
+        focus on matching items.
+
+        Example:
+            items = [taxi, crown, tea, cat, boat, car, zoo, 001, 2]
+            search_pattern = 'c.*'
+
+            sorted_result = [car, cat, crown][001, 2, boat, taxi, tea, zoo]
+
+        As seen in the result above, the first group indicates items
+        that match the search pattern, fulfilling criteria A.
+
+        The second group indicates non-matching items, fulfilling criteria B.
+        This group will also display semi-transparent, as noted above.
+
+        Finally, both groups are sorted ascending, fulfilling criteria C.
+    """
     # Signals.
     item_priority_checked = QtCore.Signal(object, bool)  # Emit on regex match.
 
@@ -588,8 +731,9 @@ class _TagListProxyModel(QtCore.QSortFilterProxyModel):
         self.setSortRole(DISPLAY_ROLE)
 
         # DynamicSortFilter can't be True when updating source model via proxy.
-        # We're doing this (item_matches_query) to inform model when an item
-        # matches the search criteria (for delegate styling).
+        # Since we need to do this (item_matches_query) to inform the source
+        # model when an item matches the search criteria (for delegate
+        # styling), let's disable it.
         self.setDynamicSortFilter(False)
 
         self.__search_query_regex = QtCore.QRegExp(
@@ -626,17 +770,7 @@ class _TagListProxyModel(QtCore.QSortFilterProxyModel):
             B) Followed by the non-matching items.
             C) Both must always be sorted in ascending order.
 
-            Example:
-                items = [taxi, crown, tea, cat, boat, car, zoo, 001, 2]
-                search_pattern = 'c.*'
-                result = [car, cat, crown][001, 2, boat, taxi, tea, zoo]
-
-        Args:
-            left:
-            right:
-
-        Returns:
-
+        See class docstring for more details.
         """
         # Get the items from the source modules.
         l_item = self.sourceModel().itemFromIndex(left)
@@ -705,10 +839,18 @@ class _TagListProxyModel(QtCore.QSortFilterProxyModel):
 
     # Public.
     def sort_by_match(self, search_text):
+        """Sort the proxy model with the provided text.
+
+        Args:
+            search_text (str): The text pattern to sort tags by.
+
+        """
         # Make sure any Regex special characters are escaped.
         search_text = self.__search_query_regex.escape(search_text)
 
         # Search pattern to find tags is a fixed word anywhere in the string.
+        # I'm intentionally enforcing wildcards as I want to find any
+        # matching text within a tag.
         search_pattern = '.*{pat}.*'.format(pat=search_text) if search_text \
             else '.*'
 
@@ -719,7 +861,8 @@ class _TagListProxyModel(QtCore.QSortFilterProxyModel):
         # Since delegate painting relies on SORTING_MATCH_ROLE, we need to
         # account for single item models, so that searching re-paints the
         # delegate appropriately. Otherwise the item's SORTING_MATCH_ROLE
-        # will stay False until a second item is added and lessThan triggers.
+        # will stay False until a second item is added and allows lessThan
+        # to trigger.
         self.invalidate()
         if self.rowCount() == 1:
             src_index = self.mapToSource(self.index(0, 0))
