@@ -1,5 +1,5 @@
-from Qt import QtCore
-from Qt import QtGui
+from pyqt_tag_manager import QtCore
+from pyqt_tag_manager import QtGui
 
 
 def only_numbers(limit=None):

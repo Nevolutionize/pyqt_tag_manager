@@ -1,6 +1,6 @@
 # Import local modules.
-from Qt import QtCore
-from Qt import QtWidgets
+from pyqt_tag_manager import QtCore
+from pyqt_tag_manager import QtWidgets
 from pyqt_tag_manager.qt_market import editors
 
 

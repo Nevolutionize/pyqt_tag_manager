@@ -39,12 +39,12 @@ try:
     print('Using Qt.py.')
 
 except ImportError:
-    import PyQt5 as Qt
+    from PySide2 import QtCore
+    from PySide2 import QtGui
+    from PySide2 import QtWidgets
 
-    logger.warning('Unable to import package {pkg!r}, using {vendor!r} '
-                   'instead.'.format(pkg='Qt.py', vendor='vendor.Qt')
-                   )
-    print('Using vendored Qt.py.')
+    logger.warning('Unable to import package Qt.py, using PySide2 instead.')
+    print('Using Pyside2')
 
 
 __author__ = 'Nevolutionize'
