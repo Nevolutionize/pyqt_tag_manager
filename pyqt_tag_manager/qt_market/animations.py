@@ -1,7 +1,7 @@
 # Import external modules.
-from Qt import QtCore
-from Qt import QtGui
-from Qt import QtWidgets
+from pyqt_tag_manager import QtCore
+from pyqt_tag_manager import QtGui
+from pyqt_tag_manager import QtWidgets
 
 
 class FailColorAnimation(QtCore.QPropertyAnimation):

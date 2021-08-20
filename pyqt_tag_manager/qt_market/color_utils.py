@@ -2,7 +2,7 @@
 import enum
 
 # Import local modules.
-from Qt import QtGui
+from pyqt_tag_manager import QtGui
 
 
 # TODO: The TagManager should allow configurable color maps so users can
