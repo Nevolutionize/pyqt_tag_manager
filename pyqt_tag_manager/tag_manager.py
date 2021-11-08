@@ -339,6 +339,9 @@ class _TagListViewer(QtWidgets.QListView):
 
         Args:
             tag_name (str): The name of the tag to add.
+
+        Returns:
+            item: QStandardItem representation of tag.
         """
         item = QtGui.QStandardItem()
         item.setData(tag_name, DISPLAY_ROLE)
@@ -348,6 +351,8 @@ class _TagListViewer(QtWidgets.QListView):
 
         self._model.appendRow(item)
         self.__last_item_added = item
+
+        return item
 
     def add_tags(self, tags):
         """Add a list of tags to the model.
